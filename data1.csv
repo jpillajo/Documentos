@@ -1,9 +1,0 @@
-programas
-"We introduce a sealed bid auction of a single item in which
-the winner is chosen at random among the highest k bidders
-according to a fixed probability distribution, and the price for
-the chosen winner is the Vickrey-Clarke-Groves price. We
-call such an auction a cascade auction. Our analysis suggests
-that this type of auction may give higher revenues compared
-to second price auction in cases of collusion."
-"This paper presents a new approach to basis adaptation in reinforcement learning (RL) using the recently proposed {\em mirror-descent} framework.  Mirror descent can be viewed as an enhanced gradient method, particularly suited to minimization of convex functions in high-dimensional spaces. Unlike traditional gradient methods, mirror descent undertakes gradient updates of weights in both the dual space and primal space, which are linked together using a Legendre transform. Mirror descent can be viewed as a proximal algorithm where the distance generating function used is a Bregman divergence.  We introduce a general framework for nonlinear separable value function approximation based on finding Frechet gradients of an error function based on variable projection functionals. We then show how to combine basis adaptation methods with  proximal-gradient based temporal-difference (TD) methods and present a new class of regularized TD methods, which combine feature selection through sparse $L_1$ regularization and basis adaptation. Experimental results are provided to illustrate and validate the approach."
