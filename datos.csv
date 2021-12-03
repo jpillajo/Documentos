@@ -1,0 +1,565 @@
+﻿programas
+"import re
+import nltk
+import urllib
+from nltk.corpus import stopwords
+nltk.download('stopwords')
+from bs4 import BeautifulSoup
+from nltk.stem.porter import PorterStemmer
+from urllib.request import urlopen
+import pandas as pd
+
+#defining header
+header= {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) ' 
+      'AppleWebKit/537.11 (KHTML, like Gecko) '
+      'Chrome/23.0.1271.64 Safari/537.11',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,/;q=0.8',
+      'Accept-Charset': 'ISO-8859-1,utf-8;q=0.7,*;q=0.3',
+      'Accept-Encoding': 'none',
+      'Accept-Language': 'en-US,en;q=0.8',
+      'Connection': 'keep-alive'}
+
+#the URL where you are requesting at
+req = urllib.request.Request(url=""https://towardsdatascience.com/automated-text-classification-using-machine-learning-3df4f4f9570b"", headers=header) 
+file = urllib.request.urlopen(req)
+html = file.read()
+file.close()
+soup = BeautifulSoup(html)
+tit = []
+
+for links in soup.find_all('p'):
+    if links.string != None :
+        tit.append(links.string)
+
+#Numero de Titulos
+n = 5
+        
+titulos = tit[2:n]
+data = tit[2:4]
+print('Prueba:',len(data))
+df = pd.DataFrame(data, columns=['PARRAFOS'])
+df.to_csv('Prueba1.csv', sep=',')
+
+datos=pd.read_csv('Prueba1.csv', header=0)
+titu=datos['PARRAFOS']
+
+#Normalizacion
+l = {}
+for x in range(0,len(titu)):
+    l[x] = titu[x]
+
+d=list(l.values())
+print(""------------------------------------------TITULOS-----------------------------------------"") 
+print(d)  
+
+def normalizar(n):
+    n_d = re.sub('[^A-Za-z0-9]+', ' ', n)
+    n2_d = n_d.lower()
+    return n2_d
+
+
+
+todas = []
+
+def vocabulary(d):
+    for item in d:
+        if item not in todas:
+            todas.append(item)
+                
+
+
+#Eliminacion de Stopwords
+ne = stopwords.words('english')
+
+nostop = []
+
+
+def parapalabras(n):
+    for word in n:
+        if word not in ne:
+            nostop.append(word)
+            
+            
+p = {}
+for x in range(0,len(titu)):
+    p[x] = []
+
+titulares=list(p.values())
+
+
+def parapalabras2(n,num):
+    for word in n:
+        if word not in ne:
+            titulares[num].append(word)
+
+            
+#Steamming            
+vocabulario = []
+
+steammer = PorterStemmer()
+def stmm(n):
+    for i in n:
+        vocabulario.append(steammer.stem(i))
+
+        
+q = {}
+for x in range(0,len(titu)):
+    q[x] = []
+
+titulos=list(q.values())
+
+steammer = PorterStemmer()
+def stmm2(n,num):
+    for i in n:
+        titulos[num].append(steammer.stem(i))
+        
+
+        
+        
+for x in range(0,len(titu)):   
+    d[x] = normalizar(d[x])
+    d[x] = d[x].split()   #Tokenizacion
+    vocabulary(d[x])
+    parapalabras2(d[x],x)
+    stmm2(titulares[x],x)
+
+parapalabras(todas)
+stmm(nostop)
+
+
+
+
+
+print(""-----------------------------------------VOCABULARIO-----------------------------------------"") 
+print(vocabulario) 
+print(""----------------------------------------------------------------------------------------------------"")
+
+s = {}
+for x in range(0,len(titu)):
+    s[x] = []
+
+ubicaciones=list(s.values())
+
+
+
+
+for word in vocabulario:
+    
+    def ubicacion(posicion,n,ubicacion):
+        for x in range(len(n)):
+            if n[x] == word:
+                ubicacion.append(x+1)
+        print(""["",posicion,"","",n.count(word),"","",ubicacion,""]"","" | "",end = """")
+        
+    
+    print(word,"" | "",end = """")
+    i = 0
+    
+    for item in range(0,len(titu)):
+    
+        if word in titulos[item]:
+            i += 1
+            ubicacion(item+1,titulos[item],ubicaciones[item])
+            ubicaciones[item] = []
+    print("" | ni = "",i)
+    print(""----------------------------------------------------------------------------------------------------"")
+    
+    
+B = len(vocabulario)                                #Tamaño Tabla HASH
+lv = ['none'] * B                     #Tabla HASH con todos sus elementos 'none'
+lvCod = ['none'] * B                  #Tabla HASH con todos sus elementos 'none' para vector de códigos
+
+v = vocabulario                       #Elementos a insertar
+
+for i in v:                  
+  ascii = 5*pow(len(i),2)+3*len(i)+1
+  pos = ascii%B                  #MOD (Función HASH)
+  while lv[pos] != 'none':            #Mientras la posición no tenga un elemento 'none' realiza Redispersión
+    k = (ascii%(B-1))+1
+    pos = (pos+k)%B 
+  else:                               #Al encontrar 'none' en una posición, ubica el elemento
+    lv[pos] = i
+    lvCod[pos] = ascii
+
+print(lv)                             #Imprime la tabla de palabras en forma de vector
+print('------Vector de representaciones------')
+print(lvCod)                          #Imprime la tabla de códigos en forma de vector
+ordenados = sorted(lvCod)
+print(ordenados)
+vector1 = []
+for word in ordenados:
+        if word not in vector1:
+            vector1.append(word)
+print(vector1)
+vector2 = vector1[-6:]
+print(vector2)
+
+B = 10                                #Tamaño Tabla HASH
+lv = ['none'] * B                     #Tabla HASH con todos sus elementos 'none'
+lvCod = ['none'] * B                  #Tabla HASH con todos sus elementos 'none' para vector de códigos
+
+v = vector2                       #Elementos a insertar
+
+for i in v:                  
+  ascii = 5*pow(i,2)+3*i+1
+  pos = ascii%B                  #MOD (Función HASH)
+  while lv[pos] != 'none':            #Mientras la posición no tenga un elemento 'none' realiza Redispersión
+    k = (ascii%(B-1))+1
+    pos = (pos+k)%B 
+  else:                               #Al encontrar 'none' en una posición, ubica el elemento
+    lv[pos] = i
+    lvCod[pos] = ascii
+
+print(lv)                             #Imprime la tabla de palabras en forma de vector
+print('-----Palabras con representación-----')
+for word in range(0, B):
+  if lv[word] != 'none':
+    print('La palabra',lv[word],'tiene un valor de',lvCod[word])
+print('-------------------------------------')
+for x in range(0, B):     
+    print(x,'-->',lv[x],'-->',lvCod[x])              #Imprime la tabla con posiciones"
+"import tkinter as tk
+import pandas as pd
+import numpy as np
+import math
+import time
+import csv
+import io
+import re
+import nltk
+from nltk.corpus import stopwords
+nltk.download('stopwords')
+from bs4 import BeautifulSoup
+from nltk.stem.porter import PorterStemmer
+from tkinter import filedialog
+from pathlib import Path
+from numpy import dot
+from numpy.linalg import norm
+from scipy import spatial
+
+start_time = time.time()
+#1. Consumir en Python, directamente desde la URL, el siguiente dataset: https://archive.ics.uci.edu/ml/datasets/AAAI+2013+Accepted+Papers (Enlaces a un sitio externo.). 
+#En el caso de no lograr hacer este paso ir al literal 2, caso contrario avanzar al literal 3 (1 Pto.)
+
+url = 'https://archive.ics.uci.edu/ml/machine-learning-databases/00314/%5bUCI%5d%20AAAI-13%20Accepted%20Papers%20-%20Papers.csv'
+df = pd.read_csv(url)
+print(""----------------------Literal 1----------------------"")
+print(df)
+#######################################NORMALIZACION#######################################
+def normalizacion(dato):
+  titles=df[dato][0:6]
+
+  titu=titles.values.tolist()
+
+  #3. Realizar el proceso NLP de normalización de los abstracts, de los primeros seis documentos (0.5 Ptos.).
+  #Normalizacion
+  l = {}
+  for x in range(0,len(titu)):
+      l[x] = titu[x]
+
+  d=list(l.values())
+
+  def normalizar(n):
+      n_d = re.sub('[^A-Za-z0-9]+', ' ', n)
+      n2_d = n_d.lower()
+      return n2_d
+
+
+  todas = []
+
+  def vocabulary(d):
+      for item in d:
+          if item not in todas:
+              todas.append(item)
+                  
+  #4. Realizar eliminación de stopwords, stemming (algoritmo de Porter) y tokenización de los abstracts, de los primeros seis documentos (0.5 Ptos.).
+  #Eliminacion de Stopwords
+  ne = stopwords.words('english')
+
+  nostop = []
+
+
+  def parapalabras(n):
+      for word in n:
+          if word not in ne:
+              nostop.append(word)
+              
+              
+  p = {}
+  for x in range(0,len(titu)):
+      p[x] = []
+
+  titulares=list(p.values())
+
+
+  def parapalabras2(n,num):
+      for word in n:
+          if word not in ne:
+              titulares[num].append(word)
+
+              
+  #Steamming            
+  subVocabulario = []
+
+  steammer = PorterStemmer()
+  def stmm(n):
+      for i in n:
+          subVocabulario.append(steammer.stem(i))
+
+          
+  q = {}
+  for x in range(0,len(titu)):
+      q[x] = []
+
+  titulos=list(q.values())
+
+  steammer = PorterStemmer()
+  def stmm2(n,num):
+      for i in n:
+          titulos[num].append(steammer.stem(i))
+  
+  for x in range(0,len(titu)):
+      d[x] = normalizar(d[x])
+      d[x] = d[x].split()
+      if dato==""Abstract"":
+        vocabulary(d[x])
+      parapalabras2(d[x],x)
+      stmm2(titulares[x],x)
+
+
+  parapalabras(todas)
+  stmm(nostop)
+
+  vocabulario = list(set(subVocabulario))
+  print(""----------------------Literal 3----------------------"")
+  print(d)
+  print(""----------------------Literal 4----------------------"")
+  print(vocabulario)
+  #5. Obtener el full inverted index, del literal anterior (1 Pto.)
+  print(""----------------------Literal 5----------------------"")
+  s = {}
+  for x in range(0,len(titu)):
+      s[x] = []
+
+  ubicaciones=list(s.values())
+
+  for word in vocabulario:
+    
+    def ubicacion(posicion,n,ubicacion):
+        for x in range(len(n)):
+            if n[x] == word:
+                ubicacion.append(x+1)
+        print(""["",posicion,"","",n.count(word),"","",ubicacion,""]"","" | "",end = """")
+
+    print(word,"" | "",end = """")
+    i = 0
+    
+    for item in range(0,len(titu)):
+    
+        if word in titulos[item]:
+            i += 1
+            ubicacion(item+1,titulos[item],ubicaciones[item])
+            ubicaciones[item] = []
+    print("" | ni = "",i)
+    print(""----------------------------------------------------------------------------------------------------"")
+        
+  return titulos,d,vocabulario,titu
+
+def metodoTablaHash(vocabulario):
+      #6. Colocar en un tabla hash de tamaño 10, los primeros 5 tokens del literal anterior. Usar el sistema de codificación ASCII, con base a=3 y función polinomial  (1 Pto.)
+    literal5tokens = vocabulario[:5]
+
+    a = 3                                 #Valor constante mayor a 1
+    B = 10                                #Tamaño Tabla HASH
+    lv = ['none'] * B                     #Tabla HASH con todos sus elementos 'none'
+    lvCod = ['none'] * B                  #Tabla HASH con todos sus elementos 'none' para vector de códigos
+
+    v = literal5tokens           #Elementos a insertar
+
+    for i in v:                  
+      acumulador = 0                      #Inicializar acumulador de la función
+      j = len(i)-1                        #Menorar un valor a la longitud de la palabra
+      for caracter in i:
+        ascii = ord(caracter)             #Convertir a valor ASCII cada caracter de la palabra
+        fc = ascii*pow(a,j)               #Aplicar función polinomial
+        acumulador = acumulador + fc      #Sumar el valor de cada caracter hallado por la función polinomial
+        j =  j-1                          #Restar cada iteración a la longitud de la palabra
+        
+      pos = acumulador%B                  #MOD (Función HASH)
+      while lv[pos] != 'none':            #Mientras la posición no tenga un elemento 'none' realiza Redispersión
+        k = (acumulador%(B-1))+1
+        pos = (pos+k)%B 
+      else:                               #Al encontrar 'none' en una posición, ubica el elemento
+        lv[pos] = i
+        lvCod[pos] = acumulador
+
+    print(""----------------------Literal 6----------------------"")
+    print(lv)                             #Imprime la tabla de palabras en forma de vector
+    print('------Vector de representaciones------')
+    print(lvCod)                          #Imprime la tabla de códigos en forma de vector
+    print('-----Palabras con representación-----')
+    for word in range(0, B):
+      if lv[word] != 'none':
+        print('La palabra',lv[word],'tiene un valor de',lvCod[word])
+
+#######################################MÉTODO JACCARD#######################################
+def metodoJaccard(titulos,d):
+  interseccion = []
+  union = []
+  coeficientes = []
+  ######################################INTERSECCION###############################
+  def matrizInterseccion(cadaTitulo):
+    a = cadaTitulo
+    b = cadaTitulo
+    for i in a:
+        for j in b:
+            d = len(list(set(j) & set(i)))
+            interseccion.append(d)
+  ######################################SUMA DE ELEMENTOS######################################
+  def matrizUnion(cadaTitulo):
+    a = cadaTitulo
+    b = cadaTitulo
+    for i in a:
+      for j in b:
+        d = len(list(set(j).union(set(i))))
+        union.append(d)
+  
+  matrizInterseccion(titulos)
+  matrizInterseccionTitulos = np.reshape(interseccion,(len(d), len(d)))
+
+  matrizUnion(titulos)
+  matrizUnionTitulos = np.reshape(union,(len(d), len(d)))
+  ######################################MATRIZ DE JACCARD###############################
+  def jaccard(vectorUnion,vectorInterseccion):
+    for i in range(len(vectorUnion)):
+      coeficiente = vectorInterseccion[i]/vectorUnion[i]
+      coeficientes.append(round(coeficiente,2))
+
+  jaccard(union,interseccion)
+  coeficienteJaccard = np.reshape(coeficientes,(len(d), len(d)))
+  
+  return coeficienteJaccard
+
+#######################################MÉTODO DE COSENOS#######################################
+def metodoCoseno(vocabulario,titu,titulos):
+  TF_vector=[]
+  WTF_vector=[]
+  DF_vector=[]
+  IDF_vector = []
+  WTDxIDF_vector = []
+  vectorSumaColumnas = []
+  vectorNormalizado = []
+  valores = []
+  vectorIncidenciaBinaria = []
+
+  ##########CALCULO DE TF##########
+  for word in vocabulario:
+    for n in titulos:
+      TF_vector.append(n.count(word))
+
+  ##########CALCULO DE WTF##########
+  for item in TF_vector:
+    if item>0:
+      factor_WTF = 1+(math.log10(item))
+      WTF_vector.append(factor_WTF)
+    else:
+      WTF_vector.append(0)
+
+  WTF_matriz=np.reshape(WTF_vector,(len(vocabulario),len(titu)))
+
+  ##########CALCULO DE DF##########
+  for word in vocabulario:
+    i=0
+    for item in range(0,len(titu)):
+      if word in titulos[item]:
+        i += 1
+        vectorIncidenciaBinaria.append(1)
+      else: 
+        vectorIncidenciaBinaria.append(0)
+    DF_vector.append(i)
+
+  #7. Obtener la matriz de incidencia binaria, del literal 4, e indicar las dimensiones de la matriz resultante (1 Pto.)
+  matrizIncidenciaBinaria = np.reshape(vectorIncidenciaBinaria,(len(vocabulario),len(titu)))
+  print(""----------------------Literal 7----------------------"")
+  print(matrizIncidenciaBinaria)
+  print(""Dimensiones de la Matriz de Incidencia Binaria:"",matrizIncidenciaBinaria.shape)
+  ##########CALCULO DEL IDF##########
+  for item in DF_vector:
+    factor_ITF = math.log10(len(titu)/item)
+    IDF_vector.append(factor_ITF)
+
+
+  ##########CALCULO WTFxIDF##########
+  for x in range(len(vocabulario)):
+    for y in range(len(titu)):
+      WTDxIDF_vector.append(IDF_vector[x]*WTF_matriz[x][y])
+
+  WTDxIDF_matriz=np.reshape(WTDxIDF_vector,(len(vocabulario),len(titu)))
+  #8. Obtener la matriz TF-IDF, del literal 4, e indicar las dimensiones de la matriz resultante (1 Pto.)
+  print(""----------------------Literal 8----------------------"")
+  print(WTDxIDF_matriz)
+  print(""Dimensiones de la Matriz TF-IDF:"",WTDxIDF_matriz.shape)
+
+  ##########NORMALIZACION DE VECTORES##########
+  for i in range(len(titu)):
+      acum  = 0
+      for fila in WTDxIDF_matriz:
+          acum = acum + pow(fila[i],2)
+      vectorSumaColumnas.append(pow(acum,1/2))
+
+  for x in range(len(vectorSumaColumnas)):
+    for y in range(len(WTDxIDF_matriz)):
+      vectorNormalizado.append(WTDxIDF_matriz[y][x]/vectorSumaColumnas[x])     
+
+  matrizNormalizada = np.reshape(vectorNormalizado,(len(vectorSumaColumnas),len(WTDxIDF_matriz)))
+  matrizTranspuesta = np.transpose(matrizNormalizada)
+
+  TRANSPUESTA_dataframe=pd.DataFrame(matrizTranspuesta)
+
+  ##########MÉTODO DEL SIMILITUD COSENO##########
+  for i in range(len(titu)):
+    for j in range(len(titu)):
+      if j>=i:
+        factor = round(TRANSPUESTA_dataframe[i].dot(TRANSPUESTA_dataframe[j]),3)
+        valores.append(factor)
+      else:
+        valores.append(0)
+      
+  valores = np.reshape(valores,(len(titu),len(titu)))
+  valores = valores + valores.T - np.diag(np.diag(valores))
+
+  return valores
+#######################################MATRIZ DE SIMILITUD CON DESIGNACIÓN DE PESOS#######################################
+def similitud(matrizTitulos,matrizKeywords,matrizAbstract):
+  #PESO PARA TÍTULOS 20% (0.2)
+  titulosPeso = np.multiply(matrizTitulos,0.2)
+  #PESO PARA KEYWORDS 30% (0.3)
+  keywordsPeso = np.multiply(matrizKeywords,0.3)
+  #PESO PARA ABSTRACT 50% (0.5)
+  abstractPeso = np.multiply(matrizAbstract,0.5)
+  #print(titulosPeso)
+  #print(""---------------------------"")
+  #print(keywordsPeso)
+  #print(""---------------------------"")
+  #print(abstractPeso)
+  #print(""---------------------------"")
+  
+  matrizSimilitudPrevia = np.add(titulosPeso,keywordsPeso)
+  matrizSimilitud = np.add(matrizSimilitudPrevia,abstractPeso)
+
+  SIMILITUD_dataframe=pd.DataFrame(matrizSimilitud)
+
+  return SIMILITUD_dataframe
+
+print(""--------------------MATRIZ DE SIMILITUDES CON MÉTODO COSENO PARA ABSTRACT--------------------"")
+[titulos,d,vocabulario,titu] = normalizacion(""Abstract"")
+tablaHash = metodoTablaHash(vocabulario)
+matrizAbstractJaccard = metodoJaccard(titulos,d)
+print(""--------------------MATRIZ DE SIMILITUDES CON DESIGNACIÓN DE PESOS--------------------"")
+matrizAbstractCoseno = metodoCoseno(vocabulario,titu,titulos)
+#9. Mediante el coeficiente de Jaccard, en función de los abstracts que han pasado todo el proceso de NLP, indique que tan similares son los documentos D6 y D5 (1 Pto.)
+print(""----------------------Literal 9----------------------"")
+print(matrizAbstractJaccard[4][5])
+
+print(""Tiempo total de ejecución: %s segundos"" % (time.time() - start_time))"
+"parangaricutirimicuaro"
