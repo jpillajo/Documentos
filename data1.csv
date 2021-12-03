@@ -352,3 +352,315 @@ Además, se hace énfasis en que el ser humano únicamente está destinado a des
 Dentro de otro apartado, el papa resalta el problema migratorio por el cual la humanidad ha pasado, pasa y continuará pasando. Esto también lo resume en verbos como: acoger, proteger, promover e integrar, para así crearnos un ideal con el cual podas incrementar la posibilidad de vivir y crecer con dignidad. Si las personas no respetan el derecho que tenemos todos los seres humanos, entonces no podremos generar un correcto espacio donde realizarse correctamente la persona.
 Se puede concluir que existen muchísimas amenazas dentro de nuestra sociedad que atentan contra la integridad del ser humano. Pero no debemos quedarnos solo con ello, puesto que Dios continúa dándonos su bendición y el apoyo necesario para cambiar este panorama. Él ha sembrado la semilla del bien dentro de cada persona y solamente está en nosotros hacerla florecer. Si logramos que esto suceda ya habremos empezado a desarrollar un ambiente integral para las personas, puesto que el amor elimina cualquier sentido de egoísmo en las acciones del ser humano y lo lleva a generar grandes posibilidades de vivir y crecer con dignidad.
 "
+"import tkinter as tk
+import pandas as pd
+import numpy as np
+import math
+import time
+import csv
+import io
+import re
+import nltk
+from nltk.corpus import stopwords
+nltk.download('stopwords')
+from bs4 import BeautifulSoup
+from nltk.stem.porter import PorterStemmer
+from tkinter import filedialog
+from pathlib import Path
+from numpy import dot
+from numpy.linalg import norm
+from scipy import spatial
+
+start_time = time.time()
+
+#Datos del ejercicio:
+D1 = "Fall Detection in Video Sequences Based on a Three-Stream Convolutional Neural Network."
+D2 = "Moving Cast Shadow Detection in Video Based on New Chromatic Criteria and Statistical Modeling."
+D3 = "Rare Geometries: Revealing Rare Categories via Dimension-driven Statistics."
+D4 = "Pelee-Text: A Tiny Convolutional Neural Network for Multi-Oriented Scene Text Detection "
+D5 = "Semi-Supervised Discriminative Transfer Learning in Cross-Language Text Classification."
+D6 = "In cancer biology experiments, we use our algorithm to predict mutation status of important cancer genes from gene expression profiles using two distinct cancer populations, namely, patient-derived primary tumor data and in-vitro-derived cancer cell line data. We show that we can increase our generalization performance on primary tumors using cell lines as an auxiliary data source."
+D7 = "Our two main contributions are: (i) two novel probabilistic models for binary and multiclass classification, and (ii) very efficient variational approximation procedures for these models. We illustrate the generalization performance of our algorithms on two different applications. In computer vision experiments, our method outperforms the state-of-the-art algorithms on nine out of 12 benchmark supervised domain adaptation experiments defined on two object recognition data sets."
+D8 = "Transfer learning considers related but distinct tasks defined on heterogenous domains and tries to transfer knowledge between these tasks to improve generalization performance. It is particularly useful when we do not have sufficient amount of labeled training data in some tasks, which may be very costly, laborious, or even infeasible to obtain. Instead, learning the tasks jointly enables us to effectively increase the amount of labeled training data. In this paper, we formulate a kernelized Bayesian transfer learning framework that is a principled combination of kernel-based dimensionality reduction models with task-specific projection matrices to find a shared subspace and a coupled classification model for all of the tasks in this subspace."
+
+Q1 = "Probabilisitic model in cancer experiments"
+Q2 = "Machine learning with smaller Datasets"
+Q3 = "Learning in tasks with small data and Classifications models"
+
+datos = [D1,D2,D3,D4,D5,D6,D7,D8,Q1,Q2,Q3]
+df = pd.DataFrame()
+df['dato'] = datos
+
+print(df)
+#######################################NORMALIZACION#######################################
+def normalizacion(dato):
+  titles=df[dato]
+
+  titu=titles.values.tolist()
+
+  #1. Realizar un proceso de limpieza eliminación de caracteres especiales y conversión a letras minúsculas, tanto para consultas como para documentos. (0.5 Pto.)
+  #Normalizacion
+  l = {}
+  for x in range(0,len(titu)):
+      l[x] = titu[x]
+
+  d=list(l.values())
+
+  def normalizar(n):
+      n_d = re.sub('[^A-Za-z0-9]+', ' ', n)
+      n2_d = n_d.lower()
+      return n2_d
+
+
+  todas = []
+
+  def vocabulary(d):
+      for item in d:
+          if item not in todas:
+              todas.append(item)
+                  
+  #2. Eliminar las stopwords sobre los datos curados, realizar stemming (algoritmo de Porter) y tokenizar (tanto consultas como documentos). (0.5 Pto.).
+  #Eliminacion de Stopwords
+  ne = stopwords.words('english')
+
+  nostop = []
+
+
+  def parapalabras(n):
+      for word in n:
+          if word not in ne:
+              nostop.append(word)
+              
+              
+  p = {}
+  for x in range(0,len(titu)):
+      p[x] = []
+
+  titulares=list(p.values())
+
+
+  def parapalabras2(n,num):
+      for word in n:
+          if word not in ne:
+              titulares[num].append(word)
+
+              
+  #Steamming            
+  subVocabulario = []
+
+  steammer = PorterStemmer()
+  def stmm(n):
+      for i in n:
+          subVocabulario.append(steammer.stem(i))
+
+          
+  q = {}
+  for x in range(0,len(titu)):
+      q[x] = []
+
+  titulos=list(q.values())
+
+  steammer = PorterStemmer()
+  def stmm2(n,num):
+      for i in n:
+          titulos[num].append(steammer.stem(i))
+  
+  for x in range(0,len(titu)):
+      d[x] = normalizar(d[x])
+      d[x] = d[x].split()
+      if dato=="dato":
+        vocabulary(d[x])
+      parapalabras2(d[x],x)
+      stmm2(titulares[x],x)
+
+
+  parapalabras(todas)
+  stmm(nostop)
+
+  vocabulario = list(set(subVocabulario))
+  print("----------------------Literal 1----------------------")
+  print(d)
+  print("----------------------Literal 2----------------------")
+  print(vocabulario)
+        
+  return titulos,d,vocabulario,titu
+
+#######################################MÉTODO JACCARD#######################################
+def metodoJaccard(titulos,d):
+  interseccion = []
+  union = []
+  coeficientes = []
+  ######################################INTERSECCION###############################
+  def matrizInterseccion(cadaTitulo):
+    a = cadaTitulo
+    b = cadaTitulo
+    for i in a:
+        for j in b:
+            d = len(list(set(j) & set(i)))
+            interseccion.append(d)
+  ######################################SUMA DE ELEMENTOS######################################
+  def matrizUnion(cadaTitulo):
+    a = cadaTitulo
+    b = cadaTitulo
+    for i in a:
+      for j in b:
+        d = len(list(set(j).union(set(i))))
+        union.append(d)
+  
+  matrizInterseccion(titulos)
+  matrizInterseccionTitulos = np.reshape(interseccion,(len(d), len(d)))
+
+  matrizUnion(titulos)
+  matrizUnionTitulos = np.reshape(union,(len(d), len(d)))
+  ######################################MATRIZ DE JACCARD###############################
+  def jaccard(vectorUnion,vectorInterseccion):
+    for i in range(len(vectorUnion)):
+      coeficiente = vectorInterseccion[i]/vectorUnion[i]
+      coeficientes.append(round(coeficiente,2))
+
+  jaccard(union,interseccion)
+  coeficienteJaccard = np.reshape(coeficientes,(len(d), len(d)))
+  
+  return coeficienteJaccard
+
+#######################################MÉTODO DE COSENOS#######################################
+def metodoCoseno(vocabulario,titu,titulos):
+  TF_vector=[]
+  TF_matriz=[]
+  WTF_vector=[]
+  DF_vector=[]
+  IDF_vector = []
+  WTDxIDF_vector = []
+  vectorSumaColumnas = []
+  vectorNormalizado = []
+  valores = []
+  
+  #3. Crear una sola bolsa de palabras unificada (tanto de consultas como documentos) e indicar las dimensiones de la matriz (1 Ptos.)
+  ##########CALCULO DE TF##########
+  for word in vocabulario:
+    for n in titulos:
+      TF_vector.append(n.count(word))
+
+  print("----------------------Literal 3----------------------")
+  TF_matriz=np.reshape(TF_vector,(len(vocabulario),len(titu)))
+  print(TF_matriz)
+  print("Bolsa de palabras unificada (tanto de consultas como documentos):",TF_matriz.shape)
+
+  ##########CALCULO DE WTF##########
+  for item in TF_vector:
+    if item>0:
+      factor_WTF = 1+(math.log10(item))
+      WTF_vector.append(factor_WTF)
+    else:
+      WTF_vector.append(0)
+
+  WTF_matriz=np.reshape(WTF_vector,(len(vocabulario),len(titu)))
+
+  ##########CALCULO DE DF##########
+  for word in vocabulario:
+    i=0
+    for item in range(0,len(titu)):
+      if word in titulos[item]:
+        i += 1
+    DF_vector.append(i)
+
+  ##########CALCULO DEL IDF##########
+  for item in DF_vector:
+    factor_ITF = math.log10(len(titu)/item)
+    IDF_vector.append(factor_ITF)
+
+
+  ##########CALCULO WTFxIDF##########
+  for x in range(len(vocabulario)):
+    for y in range(len(titu)):
+      WTDxIDF_vector.append(IDF_vector[x]*WTF_matriz[x][y])
+
+  WTDxIDF_matriz=np.reshape(WTDxIDF_vector,(len(vocabulario),len(titu)))
+  #4. Obtener la matriz TF-IDF, de toda la bolsa total de palabras (1 Ptos.)
+  print("----------------------Literal 4----------------------")
+  print(WTDxIDF_matriz)
+  print("Dimensiones de la Matriz TF-IDF:",WTDxIDF_matriz.shape)
+
+  ##########NORMALIZACION DE VECTORES##########
+  for i in range(len(titu)):
+      acum  = 0
+      for fila in WTDxIDF_matriz:
+          acum = acum + pow(fila[i],2)
+      vectorSumaColumnas.append(pow(acum,1/2))
+
+  for x in range(len(vectorSumaColumnas)):
+    for y in range(len(WTDxIDF_matriz)):
+      vectorNormalizado.append(WTDxIDF_matriz[y][x]/vectorSumaColumnas[x])     
+
+  matrizNormalizada = np.reshape(vectorNormalizado,(len(vectorSumaColumnas),len(WTDxIDF_matriz)))
+  matrizTranspuesta = np.transpose(matrizNormalizada)
+
+  TRANSPUESTA_dataframe=pd.DataFrame(matrizTranspuesta)
+
+  ##########MÉTODO DEL SIMILITUD COSENO##########
+  for i in range(len(titu)):
+    for j in range(len(titu)):
+      if j>=i:
+        factor = round(TRANSPUESTA_dataframe[i].dot(TRANSPUESTA_dataframe[j]),3)
+        valores.append(factor)
+      else:
+        valores.append(0)
+      
+  valores = np.reshape(valores,(len(titu),len(titu)))
+  valores = valores + valores.T - np.diag(np.diag(valores))
+
+  return valores
+#######################################MATRIZ DE SIMILITUD CON DESIGNACIÓN DE PESOS#######################################
+def similitud(matrizTitulos,matrizKeywords,matrizAbstract):
+  #PESO PARA TÍTULOS 20% (0.2)
+  titulosPeso = np.multiply(matrizTitulos,0.2)
+  #PESO PARA KEYWORDS 30% (0.3)
+  keywordsPeso = np.multiply(matrizKeywords,0.3)
+  #PESO PARA ABSTRACT 50% (0.5)
+  abstractPeso = np.multiply(matrizAbstract,0.5)
+  
+  matrizSimilitudPrevia = np.add(titulosPeso,keywordsPeso)
+  matrizSimilitud = np.add(matrizSimilitudPrevia,abstractPeso)
+
+  SIMILITUD_dataframe=pd.DataFrame(matrizSimilitud)
+
+  return SIMILITUD_dataframe
+
+#MAIN DEL EXAMEN
+[titulos,d,vocabulario,titu] = normalizacion("dato")
+matrizDatoJaccard = metodoJaccard(titulos,d)
+matrizDatoCoseno = metodoCoseno(vocabulario,titu,titulos)
+#5. Qué tan similares son los documentos D4 y D1. Exprese su respuesta como una probabilidad utilizando dos métodos diferentes (1 Pto.)
+print("----------------------Literal 5----------------------")
+print("Probabilidad de similitud entre D4 y D1 mediante el Método de Jaccard:",matrizDatoJaccard[3][0])
+print("Probabilidad de similitud entre D4 y D1 mediante el Método del Coseno:",matrizDatoCoseno[3][0])
+#6. Considerando un sistema de RI. Si un usuario realiza la tercera consulta, cuál debería ser el orden en el que se desplieguen la colección de ocho documentos en función de 
+#su importancia?.  Justifique su respuesta mediante un sistema de puntuación , donde se muestre los resultados de cada puntuación (2 Ptos.)
+print("----------------------Literal 6----------------------")
+print("Puntuación Jaccard")
+puntuacion_D3_jaccard = matrizDatoJaccard[10,:8]
+ranking1 = np.sort(puntuacion_D3_jaccard)
+print(np.sort(ranking1))
+print("1. Documento 5:",ranking1[-1])
+print("2. Documento 8:",ranking1[-2])
+print("3. Documento 7:",ranking1[-3])
+print("4. Documento 2:",ranking1[-4])
+print("5. Documento 6:",ranking1[-5])
+print("6. Documento 1:",ranking1[-6])
+print("7. Documento 3:",ranking1[-7])
+print("8. Documento 4:",ranking1[-8])
+print("Puntuación Coseno")
+puntuacion_D3_coseno = matrizDatoCoseno[10,:8]
+ranking2 = np.sort(puntuacion_D3_coseno)
+print(np.sort(ranking2))
+print("Orden de similitud según Jaccard")
+print("1. Documento 8:",ranking2[-1])
+print("2. Documento 5:",ranking2[-2])
+print("3. Documento 7:",ranking2[-3])
+print("4. Documento 6:",ranking2[-4])
+print("5. Documento 2:",ranking2[-5])
+print("6. Documento 1:",ranking2[-6])
+print("7. Documento 3:",ranking2[-7])
+print("8. Documento 4:",ranking2[-8])
+
+print("Tiempo total de ejecución: %s segundos" % (time.time() - start_time))"
